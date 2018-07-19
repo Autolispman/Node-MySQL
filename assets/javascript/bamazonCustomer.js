@@ -38,11 +38,11 @@ function start() {
                             inquirer.prompt([
                                 {
                                     type: "input",
-                                    name: "productQauntity",
+                                    name: "productQuantity",
                                     message: "Enter quantity of this product"
                                 }
                             ]).then(function (answer1) {
-                                if(answer1.productQauntity < 0) {
+                                if(answer1.productQuantity < 0) {
                                     console.log("Quantity has to be 0 or more. 0 is for used for cancel")
                                     askQua()
                                 }
@@ -54,9 +54,9 @@ function start() {
                                             console.log(err)
                                         }
                                         else {
-                                            if (isInStock(res, answer1.productQauntity)) {
+                                            if (isInStock(res, answer1.productQuantity)) {
                                                 connection.query("UPDATE products SET ? WHERE ?",
-                                                    [{ stock_quantity: res[0].stock_quantity - answer1.productQauntity }, { item_id: res[0].item_id }],
+                                                    [{ stock_quantity: res[0].stock_quantity - answer1.productQuantity }, { item_id: res[0].item_id }],
                                                     function (err, res1) {
                                                         if (err) {
                                                             console.error(err)
@@ -65,7 +65,7 @@ function start() {
                                                             if (res1.changedRows > 0) {
                                                                 let cartItem = {
                                                                     item: res[0],
-                                                                    quantityPurchased: answer1.productQauntity
+                                                                    quantityPurchased: answer1.productQuantity
                                                                 }
                                                                 cart.items.push(cartItem)    
                                                             }

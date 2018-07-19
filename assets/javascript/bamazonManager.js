@@ -34,7 +34,6 @@ function start() {
                             start()
                         }
                     })
-
                 break
             case "View Low Inventory":
                 connection.query("SELECT item_id, product_name, price, stock_quantity FROM products WHERE stock_quantity < 6",
@@ -49,6 +48,60 @@ function start() {
                             start()
                         }
                     })
+                break
+            case "Add to Inventory":
+                connection.query("SELECT item_id, product_name, price, stock_quantity FROM products",
+                    [],
+                    function (err, res) {
+                        if (err) {
+                            console.log(err)
+                        }
+                        else {
+                            console.log(res)
+                            displaySaleItems(res)
+                            inquirer.prompt([
+                                {
+                                    type: "input",
+                                    name: "productChoice",
+                                    message: "Enter ID of product."
+                                }
+                            ]).then(function (answer1) {
+                                inquirer.prompt([
+                                    {
+                                        type: "input",
+                                        name: "productQuantity",
+                                        message: "Enter quantity of this product"
+                                    }
+                                ]).then(function (answer2) {
+                                    let obj = []
+                                    obj.push({ stock_quantity: parseFloat(answer2.productQuantity, 2) })
+                                    obj.push({ item_id: answer1.productChoice })
+                                    connection.query("UPDATE products SET ? WHERE ?",
+                                        obj,
+                                        function (err, res) {
+                                            if (err) {
+                                                console.log(err)
+                                            }
+                                            console.log(`${res.affectedRows} rows affected in database`)
+                                            connection.query("SELECT item_id, product_name, price, stock_quantity FROM products",
+                                                [],
+                                                function (err, res) {
+                                                    if (err) {
+                                                        console.log(err)
+                                                    }
+                                                    else {
+                                                        console.log(res)
+                                                        displaySaleItems(res)
+                                                        start()
+                                                    }
+                                                })
+                                        })
+                                })
+                            })
+                        }
+                    })
+                break
+                case "Add New Product":
                 break
             case "Exit":
                 endSession()
