@@ -42,43 +42,43 @@ function start() {
                                     message: "Enter quantity of this product"
                                 }
                             ]).then(function (answer1) {
-                                if(answer1.productQuantity < 0) {
+                                if (answer1.productQuantity < 0) {
                                     console.log("Quantity has to be 0 or more. 0 is for used for cancel")
                                     askQua()
                                 }
                                 else {
-                                connection.query("SELECT item_id, product_name, price, stock_quantity FROM products WHERE ?",
-                                    [{ item_id: answer.productChoice }],
-                                    function (err, res) {
-                                        if (err) {
-                                            console.log(err)
-                                        }
-                                        else {
-                                            if (isInStock(res, answer1.productQuantity)) {
-                                                connection.query("UPDATE products SET ? WHERE ?",
-                                                    [{ stock_quantity: res[0].stock_quantity - answer1.productQuantity }, { item_id: res[0].item_id }],
-                                                    function (err, res1) {
-                                                        if (err) {
-                                                            console.error(err)
-                                                        }
-                                                        else {
-                                                            if (res1.changedRows > 0) {
-                                                                let cartItem = {
-                                                                    item: res[0],
-                                                                    quantityPurchased: answer1.productQuantity
-                                                                }
-                                                                cart.items.push(cartItem)    
-                                                            }
-                                                            start()
-                                                        }
-                                                    })
+                                    connection.query("SELECT item_id, product_name, price, stock_quantity FROM products WHERE ?",
+                                        [{ item_id: answer.productChoice }],
+                                        function (err, res) {
+                                            if (err) {
+                                                console.log(err)
                                             }
                                             else {
-                                                console.log(`There are only ${res[0].stock_quantity} items left. Reduce quantity`)
-                                                askQua()
+                                                if (isInStock(res, answer1.productQuantity)) {
+                                                    connection.query("UPDATE products SET ? WHERE ?",
+                                                        [{ stock_quantity: res[0].stock_quantity - answer1.productQuantity }, { item_id: res[0].item_id }],
+                                                        function (err, res1) {
+                                                            if (err) {
+                                                                console.error(err)
+                                                            }
+                                                            else {
+                                                                if (res1.changedRows > 0) {
+                                                                    let cartItem = {
+                                                                        item: res[0],
+                                                                        quantityPurchased: answer1.productQuantity
+                                                                    }
+                                                                    cart.items.push(cartItem)
+                                                                }
+                                                                start()
+                                                            }
+                                                        })
+                                                }
+                                                else {
+                                                    console.log(`There are only ${res[0].stock_quantity} items left. Reduce quantity`)
+                                                    askQua()
+                                                }
                                             }
-                                        }
-                                    })
+                                        })
                                 }
                             })
                         }
@@ -124,16 +124,47 @@ function displayCart() {
 }
 
 function doCheckout() {
-    let grandTotal = 0
-    let subTotal = 0
-    console.log("--------------------------------------")
-    for (let i = 0; i < cart.items.length; i++) {
-        subTotal = cart.items[i].item.price * cart.items[i].quantityPurchased
-        console.log(`${cart.items[i].item.product_name} | $${cart.items[i].item.price} | ${cart.items[i].quantityPurchased} | $${subTotal}`)
-        grandTotal = grandTotal + subTotal
+    if (cart.items.length === 0) {
+        connection.end()
+        console.log("Cart was empty.")
     }
-    console.log(`Your grand total is $${grandTotal}`)
-    connection.end()
+    else {
+        let grandTotal = 0
+        let subTotal = 0
+        console.log("--------------------------------------")
+        for (let i = 0; i < cart.items.length; i++) {
+            subTotal = cart.items[i].item.price * cart.items[i].quantityPurchased
+            console.log(`${cart.items[i].item.product_name} | $${cart.items[i].item.price} | ${cart.items[i].quantityPurchased} | $${subTotal}`)
+            grandTotal = grandTotal + subTotal
+            connection.query("SELECT product_sales FROM products WHERE ?",
+                [{ product_name: cart.items[i].item.product_name }],
+                function (err, res) {
+                    if (err) {
+                        console.log(err)
+                    }
+                    else {
+                        let sales = res[0].product_sales + subTotal
+                        connection.query("UPDATE products SET ? WHERE ?",
+                            [
+                                { product_sales: sales },
+                                { product_name: cart.items[i].item.product_name }
+                            ],
+                            function (err, res) {
+                                if (err) {
+                                    console.log(err)
+                                }
+                                else {
+                                    console.log(`${res.affectedRows} rows affected in database`)
+                                    if (i === cart.items.length - 1) {
+                                        connection.end()
+                                    }
+                                }
+                            })
+                    }
+                })
+        }
+        console.log(`Your grand total is $${grandTotal}`)
+    }
 }
 
 start()

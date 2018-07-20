@@ -101,7 +101,81 @@ function start() {
                         }
                     })
                 break
-                case "Add New Product":
+            case "Add New Product":
+                connection.query("SELECT item_id, product_name, price, stock_quantity FROM products",
+                    [],
+                    function (err, res) {
+                        if (err) {
+                            console.log(err)
+                        }
+                        else {
+                            displaySaleItems(res)
+                            getNameOfProduct()
+                            function getNameOfProduct() {
+                                inquirer.prompt([
+                                    {
+                                        type: "input",
+                                        name: "newProduct",
+                                        message: "Enter name of new product"
+                                    }
+                                ]).then(function (answer) {
+                                    connection.query("SELECT product_name FROM products WHERE ?",
+                                        [{ product_name: answer.newProduct }],
+                                        function (err, res1) {
+                                            if (err) {
+                                                console.log(err)
+                                            }
+                                            else {
+                                                if (res1.length > 0) {
+                                                    console.log(`Product ${answer.newProduct} already exist`)
+                                                    getNameOfProduct()
+                                                }
+                                                else {
+                                                    inquirer.prompt([
+                                                        {
+                                                            type: "input",
+                                                            name: "department",
+                                                            message: "Which department?"
+                                                        },
+                                                        {
+                                                            type: "input",
+                                                            name: "price",
+                                                            message: "Enter price"
+                                                        },
+                                                        {
+                                                            type: "input",
+                                                            name: "stockQuantity",
+                                                            message: "Enter amount of stock"
+                                                        }
+                                                    ]).then(function (answer1) {
+                                                        console.log(answer.newProduct)
+                                                        console.log(answer1.department)
+                                                        console.log(answer1.price)
+                                                        console.log(answer.newProduct)
+                                                        connection.query("INSERT INTO products(product_name, department_name, price, stock_quantity) VALUES(?, ?, ?, ?)",
+                                                            [
+                                                                answer.newProduct,
+                                                                answer1.department,
+                                                                answer1.price,
+                                                                answer1.stockQuantity,
+                                                            ],
+                                                            function (err, res1) {
+                                                                if (err) {
+                                                                    console.log(err)
+                                                                }
+                                                                else {
+                                                                    console.log(`${res1.affectedRows} rows affected in database`)
+                                                                    start()
+                                                                }
+                                                            })
+                                                    })
+                                                }
+                                            }
+                                        })
+                                })
+                            }
+                        }
+                    })
                 break
             case "Exit":
                 endSession()
