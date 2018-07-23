@@ -20,9 +20,9 @@ function start() {
     ]).then(function (answer) {
         switch (answer.choice) {
             case "View Product Sales by Department":
-                connection.query("SELECT departments.department_id, departments.department_name, departments.over_head_cost, products.product_sales, products.product_sales - departments.over_head_cost AS total_profit FROM departments INNER JOIN products ON departments.department_name != products.product_name GROUP BY department_name ORDER BY department_name",
+                connection.query("SELECT departments.department_id, departments.department_name, departments.over_head_cost, SUM(products.product_sales) AS product_sales, SUM(products.product_sales) - departments.over_head_cost AS total_profit    FROM products LEFT OUTER JOIN departments ON products.department_name = departments.department_name        GROUP BY department_name ORDER BY department_name",
                     [],
-                    function (err, res) {
+                    function (err, res) { 
                         if (err) {
                             console.log(err)
                         }
